@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# This script reads filenames from STDIN and outputs any relevant provides
+# information that needs to be included in the package.
+
+#ifdef __bluecat__
+if [ "$1" = "1" ]
+then
+    OBJDUMP=objdump
+else
+    OBJDUMP=${BLUECAT_TARGET_CPU}-lynx-linux-bluecat-objdump
+fi
+#endif
+
+filelist=$(grep "\\.so" | grep -v "^/lib/ld.so" | xargs file -L 2>/dev/null | grep "ELF.*shared object" | cut -d: -f1)
+
+for f in $filelist; do
+#ifndef __bluecat
+#    soname=$(objdump -p $f | awk '/SONAME/ {print $2}')
+#else
+    soname=$($OBJDUMP -p $f | awk '/SONAME/ {print $2}')
+#endif
+    if [ "$soname" != "" ]; then
+        if [ ! -L $f ]; then
+            echo $soname
+#ifndef __bluecat__
+#	    objdump -p $f | awk '
+#		BEGIN { START=0 ; }
+#		/Version definitions:/ { START=1; }
+#		/^[0-9]/ && (START==1) { print $4; }
+#		/^$/ { START=0; }
+#	    ' | \
+#		grep -v $soname | \
+#		while read symbol ; do
+#		    echo "$soname($symbol)"
+#		done
+#else
+	    $OBJDUMP -p $f | awk '
+		BEGIN { START=0 ; }
+		/Version definitions:/ { START=1; }
+		/^[0-9]/ && (START==1) { print $4; }
+		/^$/ { START=0; }
+	    ' | \
+		grep -v $soname | \
+		while read symbol ; do
+		    echo "$soname($symbol)"
+		done
+#endif
+	fi
+    else
+	echo ${f##*/}
+    fi
+done | sort -u

@@ -1,0 +1,72 @@
+#!/bin/sh
+
+# note this works for both a.out and ELF executables
+# it also auto-generates requirment lines for shell scripts
+
+#ifdef __bluecat__
+if [ "$1" = "1" ]
+then
+    OBJDUMP=objdump
+    LDD=ldd_cdt
+else
+    OBJDUMP=${BLUECAT_TARGET_CPU}-lynx-linux-bluecat-objdump
+    LDD=ldd
+fi
+#endif
+
+ulimit -c 0
+
+filelist=`sed "s/['\"]/\\\&/g"`
+exelist=`echo $filelist | xargs -r file | grep ":.*executable" | cut -d: -f1 `
+scriptlist=`echo $filelist | xargs -r file | egrep ":.* (commands|script) " | cut -d: -f1 `
+liblist=`echo $filelist | xargs -r file | grep ":.*shared object" | cut -d : -f1 `
+
+for f in $exelist; do
+    if [ -x $f ]; then
+#ifndef __bluecat__
+#	ldd $f | awk '/=>/ { print $1 }'
+#else
+	$LDD $f | awk '/=>/ { print $1 }'
+#endif
+    fi
+done | sort -u | sed "s/['\"]/\\\&/g" | xargs -r -n 1 basename | grep -v 'libNoVersion.so' | sort -u
+
+for f in $liblist; do
+#ifndef __bluecat__
+#    ldd $f | awk '/=>/ { print $1 }'
+#else
+    $LDD $f | awk '/=>/ { print $1 }'
+#endif
+done | sort -u | sed "s/['\"]/\\\&/g" | xargs -r -n 1 basename | grep -v 'libNoVersion.so' | sort -u
+
+for f in $scriptlist; do
+    if [ -x $f ]; then
+	head -1 $f | sed -e 's/^\#\![ 	]*//' | cut -d" " -f1
+    fi
+done | sort -u
+
+for f in $liblist $exelist ; do
+#ifndef __bluecat__
+#    objdump -p $f | awk '
+#	BEGIN { START=0; LIBNAME=""; }
+#	/Version References:/ { START=1; }
+#	/required from/ && (START==1) {
+#	    sub(/:/, "", $3);
+#	    LIBNAME=$3;
+#	}
+#	(START==1) && (LIBNAME!="") && ($4~/^GLIBC_*/) { print LIBNAME "(" $4 ")"; }
+#	/^$/ { START=0; }
+#    '
+#else
+    $OBJDUMP -p $f | awk '
+	BEGIN { START=0; LIBNAME=""; }
+	/Version References:/ { START=1; }
+	/required from/ && (START==1) {
+	    sub(/:/, "", $3);
+	    LIBNAME=$3;
+	}
+	(START==1) && (LIBNAME!="") && ($4~/^GLIBC_*/) { print LIBNAME "(" $4 ")"; }
+	/^$/ { START=0; }
+    '
+#endif
+done | sort -u

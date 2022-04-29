@@ -1,0 +1,171 @@
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                          BlueCat Linux README 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+============================================================================
+System Requirements
+============================================================================
+BlueCat Linux installation is performed on a pre-installed, fully operational
+Linux host system. System requirements for the Linux host are as follows:
+   * Linux host system;
+   * Standard set of Linux utilities;
+   * 100 MB of free disk.
+
+============================================================================
+Installing BlueCat Linux 
+============================================================================
+To install BlueCat Linux onto the Linux host system, step through the 
+following procedure.
+
+1. Untar the BlueCat downloadable image.
+To do that, you have to be logged in as "root" (superuser). For instance, 
+
+# cd /tmp
+# mkdir BlueCat
+# cd BlueCat
+# tar xzf <image file name>
+
+All the remaining steps of the installation procedure can be performed under 
+a regular user account.
+
+2. Go to the directory where you want to install BlueCat Linux. This directory 
+must be empty. For instance:
+
+$ cd $HOME
+$ mkdir BlueCat
+$ cd BlueCat
+
+3. Run the BlueCat installation program:
+
+$ /tmp/BlueCat/install
+
+This program performs all necessary installation actions, which include 
+the following: 
+- Install the minimal set of BlueCat Linux RPM packages (both CDT and Target).
+- Set correct permissions for the installed binaries.
+
+You may also specify the path of the installation directory to the install 
+program. For instance:
+
+$ cd $HOME
+$ mkdir BlueCat
+$ /tmp/BlueCat/install BlueCat
+
+When the install program has finished, the installation procedure is complete.
+If you are installing BlueCat Linux onto an NFS-mounted disk, 
+make sure you enable the NFS locking daemon on the NFS Server.
+
+=============================================================================
+Setting Up the Execution Environment
+=============================================================================
+Before you can start any BlueCat Linux development, you have to set up 
+a correct execution environment. To do so, use the following procedure:
+1. Go to the directory where you have installed BlueCat Linux. For instance:
+
+$ cd $HOME/BlueCat
+
+2. Source the shell script to set up the BlueCat Linux environment variables:
+
+$ . SETUP.sh x86
+
+The SETUP.sh script sets up a number of environment variables used by 
+BlueCat Linux tools. These environment variables include BLUECAT_PREFIX, 
+which must contain the absolute path to the BlueCat Linux installation 
+directory.
+
+=============================================================================
+Demo systems
+=============================================================================
+Once you have installed BlueCat Linux onto your host system, you get a number 
+of demonstration systems sources that reside in $BLUECAT_PREFIX/demo and can 
+be booted on an embedded target. Each demo system shows a particular feature 
+of BlueCat Linux. To build the demonstration systems, use the following 
+commands:
+
+BlueCat:$ cd BLUECAT_PREFIX/demo
+BlueCat:$ make all 
+
+A demo system is composed of the following components:
+*  A BlueCat Linux kernel customized for the embedded system. This is 
+represented by a prebuilt, compressed kernel image and a .config file that 
+can be used to rebuild the kernel. You use the mkkernel tool (or equivalent) 
+to build the kernel image from the .config file.
+*  A root file system containing the tools and custom programs, required for 
+the demo system to bootstrap and run. This is represented by a prebuilt, 
+compressed root file system image and an mkrootfs specification file that 
+can be used to rebuild the root file system. You use the mkrootfs tool 
+to build the root file system image from the .spec file.
+*  Optionally, custom applications and files developed specially for the demo 
+system, such as sample application programs.
+
+Using Makefile to Rebuild a Demo System
+========================================
+Use Makefile in the demo system directory to rebuild the system images.
+A typical Makefile includes the following goals:
+
+Target		Description
+------------------------------------------
+kernel	- Builds <demo>.kernel and <demo>.disk
+rootfs	- Builds <demo>.rfs and <demo>.tar
+kdi	- Builds <demo>.kdi
+this	- Builds custom programs in src/
+all	- Builds all the goals above
+xconfig	- Copies <demo>.config to the kernel .config, calls make xconfig, 
+          and copies the updated kernel .config into <demo>.config
+clean	- Removes all prebuilt binaries
+
+Running Demo System
+===================
+You can boot a demo system on the target system from one of the following 
+devices, depending on the boot options supported by your BlueCat Linux 
+target system:
+
+Booting from a Floppy Disk
+--------------------------
+1) Install demo on a floppy from host using mkboot
+2) Boot target from floppy disk	
+For detailed explanation of how to install demo on a floppy, refer to 
+the mkboot command reference: 
+
+BlueCat:$ man mkboot
+
+Booting from a Hard Disk
+------------------------
+1) Install demo on a hard disk from host using mkboot
+2) Boot target from hard disk	
+For detailed explanation of how to install demo on a hard disk, refer to 
+the mkboot command reference: 
+
+BlueCat:$ man mkboot
+
+Booting from ROM/Flash	
+----------------------
+1) Install demo to ROM/Flash using firmware or external,
+device-specific tools
+2) Boot target from ROM/Flash
+
+Booting BlueCat Linux on x86 from ROM/Flash:
+
+Install BlueCat Linux ROM Boot BIOS as an extension BIOS using 
+Flash and BIOS management tools provided with your target hardware. 
+The BlueCat Linux ROM Boot BIOS image romboot.img is located in 
+$BLUECAT_PREFIX/boot/ directory.
+
+The BlueCat Linux ROM Boot BIOS image included in your distribution 
+is an example of a Boot BIOS developed to support booting of BlueCat 
+Linux on one of the reference embedded targets based on the x86 
+architecture (PC-680 Mobile Industrial ComputerTM of Octagon Systems 
+Corporation). You may need to make changes in the Boot BIOS code to 
+support specifics of your custom target hardware. Refer to the 
+comments in the source files of the ROM Boot BIOS residing in 
+$BLUECAT_PREFIX/usr/src/linux/arch/i386/boot/romboot.
+
+Program the demo image (<demo>.kdi) into Flash using 
+Flash and BIOS management tools provided with your target hardware.
+
+Enable support for extension BIOS on the target, either in BIOS or 
+using on-board jumpers, depending on your target hardware.
+
+Reset your target system. BlueCat Linux will boot from ROM/Flash.
+

@@ -1,0 +1,92 @@
+# Per-platform rpm configuration file.
+
+#==============================================================================
+# ---- per-platform macros.
+#
+%_arch			i386
+%_vendor		bluecat
+%_os			linux
+%_target_platform	%{_target_cpu}-%{_vendor}-%{_target_os}
+%optflags		-O2 -march=i686
+
+#==============================================================================
+# ---- configure macros.
+#
+#ifndef __bluecat__
+#%_prefix		/cdt
+#%_exec_prefix		%{_prefix}
+#%_bindir		%{_exec_prefix}/bin
+#%_sbindir		%{_exec_prefix}/sbin
+#%_libexecdir		%{_exec_prefix}/libexec
+#%_datadir		%{_prefix}/share
+#%_sysconfdir		/etc
+#%_sharedstatedir	%{_prefix}/com
+#%_localstatedir		/var
+#%_lib			lib
+#%_libdir		%{_exec_prefix}/%{_lib}
+#%_includedir		%{_prefix}/include
+#%_oldincludedir		/usr/include
+#%_infodir		%{_prefix}/info
+#%_mandir		%{_prefix}/man
+#%_initrddir		%{_sysconfdir}/rc.d/init.d
+#
+#%_defaultdocdir		%{_usr}/doc
+#else
+%_prefix		/usr
+%_exec_prefix		%{_prefix}
+%_bindir		%{_exec_prefix}/bin
+%_sbindir		%{_exec_prefix}/sbin
+%_libexecdir		%{_exec_prefix}/lib
+%_datadir		%{_prefix}/share
+%_sysconfdir		%{_prefix}/etc
+%_sharedstatedir	%{_prefix}/com
+%_localstatedir		%{_prefix}/var
+%_lib			%{_exec_prefix}/lib
+%_libdir		%{_exec_prefix}/lib
+%_includedir		%{_prefix}/include
+%_oldincludedir		%{_prefix}/include
+%_infodir		%{_prefix}/info
+%_mandir		%{_prefix}/man
+%_initrddir		/etc/rc.d/init.d
+%_defaultdocdir		%{_prefix}/doc
+#endif
+
+#==============================================================================
+# ---- Build policy macros.
+#
+#------------------------------------------------------------------------
+#	Expanded at end of %install
+#
+
+%__arch_install_post   %{nil}
+
+#ifndef __bluecat__
+#%__os_install_post    \
+#    /cdt/lib/rpm/brp-compress \
+#    /cdt/lib/rpm/brp-strip \
+#    /cdt/lib/rpm/brp-strip-comment-note \
+#%{nil}
+#else
+%__os_install_post    \
+    %{_BLUECAT_PREFIX}/cdt/lib/rpm/brp-compress \
+    %{_BLUECAT_PREFIX}/cdt/lib/rpm/brp-strip \
+    %{_BLUECAT_PREFIX}/cdt/lib/rpm/brp-strip-comment-note \
+%{nil}
+#endif
+
+%__spec_install_post\
+     %{__arch_install_post}\
+     %{__os_install_post}\
+%{nil}
+
+#------------------------------------------------------------------------
+#	Expanded at end of %prep
+#
+%__id_u			%{__id} -u
+%__chown_Rhf		%{__chown} -Rhf
+%__chgrp_Rhf		%{__chgrp} -Rhf
+%_fixowner		[ `%{__id_u}` = '0' ] && %{__chown_Rhf} root
+%_fixgroup		[ `%{__id_u}` = '0' ] && %{__chgrp_Rhf} root
+%_fixperms		%{__chmod} -Rf a+r,g-w,o-w
+
+
